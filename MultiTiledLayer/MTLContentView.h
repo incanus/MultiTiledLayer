@@ -1,5 +1,5 @@
 //
-//  MTLAppDelegate.h
+//  MTLContentView.h
 //  MultiTiledLayer
 //
 //  Created by Justin R. Miller on 1/4/13.
@@ -8,8 +8,9 @@
 
 #import <UIKit/UIKit.h>
 
-@interface MTLAppDelegate : UIResponder <UIApplicationDelegate>
+@interface MTLContentView : UIView
 
-@property (strong, nonatomic) UIWindow *window;
+@property (nonatomic, strong) UIColor *tileColor;
+@property (nonatomic, assign) int zoomLevels;
 
 @end
