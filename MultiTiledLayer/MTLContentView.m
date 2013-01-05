@@ -8,68 +8,54 @@
 
 #import "MTLContentView.h"
 
-#import <QuartzCore/QuartzCore.h>
-
-@interface MTLTiledLayer : CATiledLayer
-
-@end
-
-@implementation MTLTiledLayer
-
-+ (CFTimeInterval)fadeDuration
-{
-    return 0.25;
-}
-
-@end
-
-#pragma mark -
-
 @implementation MTLContentView
 
-+ (Class)layerClass
+- (void)drawRect:(CGRect)rect
 {
-    return [MTLTiledLayer class];
+//    NSLog(@"redraw at %i", self.zoomLevel);
+
+    int zoom = 0; //log2(self.superview.transform.a);
+
+    int virtualTileSize = 256 / powf(2, zoom);
+
+    for (int x = 0; x < rect.size.width / virtualTileSize; x++)
+    {
+        for (int y = 0; y < rect.size.height / virtualTileSize; y++)
+        {
+            CGRect subrect = CGRectMake(x * virtualTileSize, y * virtualTileSize, virtualTileSize, virtualTileSize);
+
+            CGContextRef c = UIGraphicsGetCurrentContext();
+
+            [[UIImage imageNamed:@"tile.png"] drawInRect:subrect];
+
+            CGContextSetStrokeColorWithColor(c, [[UIColor blackColor] CGColor]);
+            CGContextSetLineWidth(c, 5 / (zoom + 1));
+            CGContextStrokeRect(c, subrect);
+        }
+    }
 }
 
-- (void)didMoveToWindow
+- (void)setTransform:(CGAffineTransform)transform
 {
-    self.contentScaleFactor = 1;
-}
+    int oldZoomScale = floor(self.transform.a);
+    int newZoomScale = floor(transform.a);
 
-- (void)setZoomLevels:(int)zoomLevels
-{
-    ((CATiledLayer *)self.layer).levelsOfDetail     = zoomLevels + 1;
-    ((CATiledLayer *)self.layer).levelsOfDetailBias = zoomLevels + 1;
-}
+    NSLog(@"%i -> %i", oldZoomScale, newZoomScale);
 
-- (int)zoomLevels
-{
-    return ((CATiledLayer *)self.layer).levelsOfDetail - 1;
-}
+    [super setTransform:transform];
 
-- (void)drawLayer:(CALayer *)layer inContext:(CGContextRef)c
-{
-    usleep(200000);
+    if (newZoomScale != oldZoomScale)
+    {
+        [super setTransform:CGAffineTransformIdentity];
 
-    CGRect rect = CGContextGetClipBoundingBox(c);
+        self.zoomLevel = (newZoomScale >= 1 ? log2(newZoomScale) : 0);
 
-//    NSLog(@"%@", [NSValue valueWithCGRect:rect]);
+        float newEdge = 256 * powf(2, self.zoomLevel);
 
-    CGContextSetFillColorWithColor(c, [self.tileColor CGColor]);
-    CGContextFillRect(c, rect);
+        self.bounds = CGRectMake(0, 0, newEdge, newEdge);
 
-    CGContextSetStrokeColorWithColor(c, [[UIColor blackColor] CGColor]);
-    CGContextSetLineWidth(c, 5);
-    CGContextStrokeRect(c, rect);
-
-    int x = rect.origin.x / ((CATiledLayer *)layer).tileSize.width;
-    int y = rect.origin.y / ((CATiledLayer *)layer).tileSize.height;
-
-    UIGraphicsPushContext(c);
-    [[UIColor blackColor] set];
-    [[NSString stringWithFormat:@"%i, %i", x, y] drawAtPoint:CGPointMake(rect.origin.x + 15, rect.origin.y + 15) withFont:[UIFont systemFontOfSize:24]];
-    UIGraphicsPopContext();
+        [self setNeedsDisplay];
+    }
 }
 
 @end

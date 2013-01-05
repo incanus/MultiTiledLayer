@@ -1,5 +1,5 @@
 //
-//  MTLContentView.h
+//  MTLContainerView.h
 //  MultiTiledLayer
 //
 //  Created by Justin R. Miller on 1/4/13.
@@ -8,8 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface MTLContentView : UIView
-
-@property (nonatomic, assign) int zoomLevel;
+@interface MTLContainerView : UIView
 
 @end

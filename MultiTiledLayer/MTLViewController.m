@@ -20,8 +20,7 @@
 
     self.view.backgroundColor = [UIColor grayColor];
 
-    float boundsWidth = 1024; //powf(2, 12);
-    int subviewCount  = 4;
+    float boundsWidth = 256; //powf(2, 12);
     int zoomLevels    = 10;
 
     UIScrollView *scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
@@ -31,33 +30,18 @@
     scrollView.minimumZoomScale = 1;
     scrollView.maximumZoomScale = powf(2, zoomLevels);
 
-    UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, boundsWidth, boundsWidth)];
-    containerView.backgroundColor = [UIColor clearColor];
-
-    NSArray *colors = @[@"red", @"blue", @"green", @"yellow", @"orange", @"cyan", @"magenta", @"white", @"purple"];
-
-    for (int x = 0; x < sqrt(subviewCount); x++)
-    {
-        for (int y = 0; y < sqrt(subviewCount); y++)
-        {
-            float size = boundsWidth / sqrt(subviewCount);
-
-            MTLContentView *contentView = [[MTLContentView alloc] initWithFrame:CGRectMake(x * size, y * size, size, size)];
-
-            static int colorIndex = 0;
-
-            contentView.tileColor  = [[UIColor class] performSelector:NSSelectorFromString([NSString stringWithFormat:@"%@Color", [colors objectAtIndex:colorIndex]])];
-            contentView.zoomLevels = zoomLevels;
-
-            [containerView addSubview:contentView];
-
-            colorIndex++;
-        }
-    }
-
-    scrollView.contentSize = containerView.bounds.size;
-    [scrollView addSubview:containerView];
+    [scrollView addSubview:[[MTLContentView alloc] initWithFrame:CGRectMake(0, 0, boundsWidth, boundsWidth)]];
     [self.view addSubview:scrollView];
+    scrollView.contentSize = ((UIView *)[scrollView.subviews objectAtIndex:0]).bounds.size;
+
+    UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(zoomIn:)];
+    doubleTap.numberOfTapsRequired = 2;
+    [scrollView addGestureRecognizer:doubleTap];
+
+    UITapGestureRecognizer *twoFingerTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(zoomOut:)];
+    twoFingerTap.numberOfTapsRequired = 1;
+    twoFingerTap.numberOfTouchesRequired = 2;
+    [scrollView addGestureRecognizer:twoFingerTap];
 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
     [button setTitle:@"Reload" forState:UIControlStateNormal];
@@ -69,11 +53,25 @@
 
 - (void)reload:(id)sender
 {
-    for (MTLContentView *subview in [[[[self.view.subviews objectAtIndex:0] subviews] objectAtIndex:0] subviews])
-    {
-        subview.layer.contents = nil;
-        [subview.layer setNeedsDisplay];
-    }
+//    for (MTLContentView *subview in [[self.view.subviews objectAtIndex:0] subviews])
+//    {
+//        subview.layer.contents = nil;
+//        [subview.layer setNeedsDisplay];
+//    }
+}
+
+- (void)zoomIn:(UIGestureRecognizer *)recognizer
+{
+    UIScrollView *scrollView = ((UIScrollView *)recognizer.view);
+
+    [scrollView setZoomScale:powf(2, log2f(scrollView.zoomScale) + 1) animated:YES];
+}
+
+- (void)zoomOut:(UIGestureRecognizer *)recognizer
+{
+    UIScrollView *scrollView = ((UIScrollView *)recognizer.view);
+
+    [scrollView setZoomScale:powf(2, log2f(scrollView.zoomScale) - 1) animated:YES];
 }
 
 - (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView
