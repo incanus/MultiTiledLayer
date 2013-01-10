@@ -12,6 +12,8 @@
 
 #import <QuartzCore/QuartzCore.h>
 
+#define MTL_TILE_SIZE 256.0f
+
 @implementation MTLViewController
 
 - (void)viewDidLoad
@@ -20,7 +22,7 @@
 
     self.view.backgroundColor = [UIColor grayColor];
 
-    float boundsWidth = 256; //powf(2, 12);
+    float boundsWidth = MTL_TILE_SIZE; //powf(2, 12);
     int zoomLevels    = 10;
 
     UIScrollView *scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
@@ -29,6 +31,7 @@
     scrollView.delegate = (id <UIScrollViewDelegate>)self;
     scrollView.minimumZoomScale = 1;
     scrollView.maximumZoomScale = powf(2, zoomLevels);
+    scrollView.decelerationRate = UIScrollViewDecelerationRateFast;
 
     [scrollView addSubview:[[MTLContentView alloc] initWithFrame:CGRectMake(0, 0, boundsWidth, boundsWidth)]];
     [self.view addSubview:scrollView];
@@ -42,6 +45,9 @@
     twoFingerTap.numberOfTapsRequired = 1;
     twoFingerTap.numberOfTouchesRequired = 2;
     [scrollView addGestureRecognizer:twoFingerTap];
+
+    UITapGestureRecognizer *debugTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(debugTap:)];
+    [scrollView addGestureRecognizer:debugTap];
 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
     [button setTitle:@"Reload" forState:UIControlStateNormal];
@@ -74,9 +80,80 @@
     [scrollView setZoomScale:powf(2, log2f(scrollView.zoomScale) - 1) animated:YES];
 }
 
+- (void)debugTap:(UIGestureRecognizer *)recognizer
+{
+    CALayer *hit = [recognizer.view.layer hitTest:[recognizer locationInView:[recognizer.view.subviews objectAtIndex:0]]];
+
+    if (hit)
+    {
+//        NSLog(@"%@ (%@)", hit, [NSValue valueWithCGRect:hit.frame]);
+
+//        hit.borderColor = [[UIColor redColor] CGColor];
+//        hit.borderWidth = 5;
+    }
+}
+
 - (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView
 {
     return [scrollView.subviews objectAtIndex:0];
+}
+
+- (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(float)scale
+{
+    [[scrollView.subviews objectAtIndex:0] performSelector:@selector(setNeedsDisplay/*InRect:*/) withObject:nil/*[NSValue valueWithCGRect:visibleRect]*/ afterDelay:0.1];
+}
+
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
+{
+//    [NSObject cancelPreviousPerformRequestsWithTarget:[scrollView.subviews objectAtIndex:0]];
+}
+
+- (void)scrollViewWillBeginZooming:(UIScrollView *)scrollView withView:(UIView *)view
+{
+//    [NSObject cancelPreviousPerformRequestsWithTarget:[scrollView.subviews objectAtIndex:0]];
+}
+
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+{
+//    [[scrollView.subviews objectAtIndex:0] performSelector:@selector(setNeedsDisplay/*InRect:*/) withObject:nil/*[NSValue valueWithCGRect:visibleRect]*/ afterDelay:0.1];
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+//    NSLog(@"%@", [NSValue valueWithCGPoint:scrollView.contentOffset]);
+
+    UIView *contentView = [scrollView.subviews objectAtIndex:0];
+
+//    contentView.clearsContextBeforeDrawing = NO;
+
+//    contentView.layer.drawsAsynchronously = YES;
+
+    [NSObject cancelPreviousPerformRequestsWithTarget:contentView];
+
+//    CGRect visibleRect;
+//
+//    visibleRect = CGRectMake(scrollView.contentOffset.x,
+//                             scrollView.contentOffset.y,
+//                             scrollView.bounds.size.width,
+//                             scrollView.bounds.size.height);
+
+    [contentView performSelector:@selector(setNeedsDisplay/*InRect:*/) withObject:nil/*[NSValue valueWithCGRect:visibleRect]*/ afterDelay:0.1];
+}
+
+- (void)scrollViewDidZoom:(UIScrollView *)scrollView
+{
+    UIView *contentView = [scrollView.subviews objectAtIndex:0];
+
+    [NSObject cancelPreviousPerformRequestsWithTarget:contentView];
+
+//    CGRect visibleRect;
+//
+//    visibleRect = CGRectMake(floor(scrollView.contentOffset.x    / MTL_TILE_SIZE) * MTL_TILE_SIZE,
+//                             floor(scrollView.contentOffset.y    / MTL_TILE_SIZE) * MTL_TILE_SIZE,
+//                             (floor(scrollView.bounds.size.width  / MTL_TILE_SIZE) + 1) * MTL_TILE_SIZE,
+//                             (floor(scrollView.bounds.size.height / MTL_TILE_SIZE) + 1) * MTL_TILE_SIZE);
+
+//    [contentView performSelector:@selector(setNeedsDisplay/*InRect:*/) withObject:nil/*[NSValue valueWithCGRect:visibleRect]*/ afterDelay:0.1];
 }
 
 @end

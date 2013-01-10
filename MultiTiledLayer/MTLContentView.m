@@ -8,53 +8,184 @@
 
 #import "MTLContentView.h"
 
-@implementation MTLContentView
+#import "MTLTileLayer.h"
 
-- (void)drawRect:(CGRect)rect
+#import <QuartzCore/QuartzCore.h>
+
+#define MTL_TILE_SIZE 256.0f
+
+@interface MTLLayer : CALayer
+
+@end
+
+@implementation MTLLayer
+
+- (void)display
 {
-//    NSLog(@"redraw at %i", self.zoomLevel);
+    CGRect visibleRect = CGRectIntersection([self.delegate visibleRect], self.bounds);
 
-    int zoom = 0; //log2(self.superview.transform.a);
+    if ( ! CGRectIntersectsRect(visibleRect, self.bounds))
+        return;
 
-    int virtualTileSize = 256 / powf(2, zoom);
+//    NSLog(@"zoom %i display for %@", ((MTLContentView *)self.delegate).zoomLevel, [NSValue valueWithCGRect:visibleRect]);
 
-    for (int x = 0; x < rect.size.width / virtualTileSize; x++)
+    visibleRect = CGRectMake(floor(visibleRect.origin.x / MTL_TILE_SIZE)   * MTL_TILE_SIZE,
+                             floor(visibleRect.origin.y / MTL_TILE_SIZE)   * MTL_TILE_SIZE,
+                             ceil(visibleRect.size.width  / MTL_TILE_SIZE) * MTL_TILE_SIZE,
+                             ceil(visibleRect.size.height / MTL_TILE_SIZE) * MTL_TILE_SIZE);
+
+//    [self.sublayers makeObjectsPerformSelector:@selector(removeFromSuperlayer)];
+
+    for (int x = visibleRect.origin.x; x < visibleRect.origin.x + visibleRect.size.width; x += MTL_TILE_SIZE)
     {
-        for (int y = 0; y < rect.size.height / virtualTileSize; y++)
+        for (int y = visibleRect.origin.y; y < visibleRect.origin.y + visibleRect.size.height; y += MTL_TILE_SIZE)
         {
-            CGRect subrect = CGRectMake(x * virtualTileSize, y * virtualTileSize, virtualTileSize, virtualTileSize);
+            CGRect rect = CGRectMake(x, y, MTL_TILE_SIZE, MTL_TILE_SIZE);
 
-            CGContextRef c = UIGraphicsGetCurrentContext();
+            for (CALayer *existingSublayer in self.sublayers)
+                if (CGRectEqualToRect(existingSublayer.frame, rect))
+                    continue;
 
-            [[UIImage imageNamed:@"tile.png"] drawInRect:subrect];
+//            CALayer *hit = [self hitTest:CGPointMake(x, y)];
+//
+//            if ( ! [hit isKindOfClass:[MTLTileLayer class]])
+//            {
+//                NSLog(@"=== adding %i, %i", x, y);
 
-            CGContextSetStrokeColorWithColor(c, [[UIColor blackColor] CGColor]);
-            CGContextSetLineWidth(c, 5 / (zoom + 1));
-            CGContextStrokeRect(c, subrect);
+                MTLTileLayer *sublayer = [MTLTileLayer layer];
+
+//                sublayer.anchorPoint = CGPointMake(0, 0);
+                sublayer.frame = CGRectMake(x, y, MTL_TILE_SIZE, MTL_TILE_SIZE);
+
+//                NSLog(@"=== adding %@", [NSValue valueWithCGRect:sublayer.frame]);
+
+//                sublayer.needsDisplayOnBoundsChange = YES;
+
+                [self addSublayer:sublayer];
+
+//                NSLog(@"=== sublayer count: %i", [self.sublayers count]);
+//            }
+//            else
+//            {
+//                NSLog(@"=== skipping %i, %i", x, y);
+//
+////                [hit setNeedsDisplay];
+//
+//                [hit displayIfNeeded];
+//            }
         }
     }
 }
 
+@end
+
+#pragma mark -
+
+@implementation MTLContentView
+
++ (Class)layerClass
+{
+    return [MTLLayer class];
+}
+
+//- (void)didMoveToWindow
+//{
+//    self.layer.contentsScale = 1;
+//}
+
+- (void)drawRect:(CGRect)rect
+{
+    // no-op
+}
+
+- (CGRect)visibleRect
+{
+//    return self.layer.visibleRect;
+
+    UIScrollView *scrollView = (UIScrollView *)self.superview;
+
+//    NSLog(@"%f", scrollView.zoomScale);
+
+//    return CGRectMake(floor(scrollView.contentOffset.x   / MTL_TILE_SIZE) * MTL_TILE_SIZE,
+//                      floor(scrollView.contentOffset.y   / MTL_TILE_SIZE) * MTL_TILE_SIZE,
+//                      ceil(scrollView.bounds.size.width  / MTL_TILE_SIZE) * MTL_TILE_SIZE,
+//                      ceil(scrollView.bounds.size.height / MTL_TILE_SIZE) * MTL_TILE_SIZE);
+
+    return CGRectMake(scrollView.contentOffset.x    / scrollView.zoomScale,
+                      scrollView.contentOffset.y    / scrollView.zoomScale,
+                      scrollView.bounds.size.width  / scrollView.zoomScale,
+                      scrollView.bounds.size.height / scrollView.zoomScale);
+
+
+//    CGRect visibleRect;
+//    visibleRect.origin = scrollView.contentOffset;
+//    visibleRect.size = scrollView.bounds.size;
+//
+//    float theScale = 1.0 / scrollView.zoomScale;
+//    visibleRect.origin.x *= theScale;
+//    visibleRect.origin.y *= theScale;
+//    visibleRect.size.width *= theScale;
+//    visibleRect.size.height *= theScale;
+//
+//    visibleRect = CGRectMake(floor(visibleRect.origin.x / MTL_TILE_SIZE) * MTL_TILE_SIZE,
+//                             floor(visibleRect.origin.y / MTL_TILE_SIZE) * MTL_TILE_SIZE,
+//                             ceil(visibleRect.size.width / MTL_TILE_SIZE) * MTL_TILE_SIZE,
+//                             ceil(visibleRect.size.height / MTL_TILE_SIZE) * MTL_TILE_SIZE);
+//
+//
+//
+//
+//    return visibleRect;
+}
+
+- (void)setBounds:(CGRect)bounds
+{
+    super.bounds = bounds;
+
+//    NSLog(@"bounds now %@", [NSValue valueWithCGRect:bounds]);
+}
+
 - (void)setTransform:(CGAffineTransform)transform
 {
-    int oldZoomScale = floor(self.transform.a);
-    int newZoomScale = floor(transform.a);
+    float newZoomScale = transform.a;
 
-    NSLog(@"%i -> %i", oldZoomScale, newZoomScale);
-
-    [super setTransform:transform];
-
-    if (newZoomScale != oldZoomScale)
+    if (newZoomScale > 2 && self.bounds.size.width < (MTL_TILE_SIZE * powf(2, self.zoomLevel + 1)))
     {
         [super setTransform:CGAffineTransformIdentity];
 
-        self.zoomLevel = (newZoomScale >= 1 ? log2(newZoomScale) : 0);
+        ((UIScrollView *)self.superview).zoomScale = 1;
 
-        float newEdge = 256 * powf(2, self.zoomLevel);
+        self.zoomLevel++;
+
+        [self.layer.sublayers makeObjectsPerformSelector:@selector(removeFromSuperlayer)];
+
+        float newEdge = MTL_TILE_SIZE * powf(2, self.zoomLevel);
 
         self.bounds = CGRectMake(0, 0, newEdge, newEdge);
 
-        [self setNeedsDisplay];
+        [self.layer setNeedsDisplayInRect:[self visibleRect]];
+    }
+    else if (newZoomScale < 1 && self.bounds.size.width > (MTL_TILE_SIZE * powf(2, self.zoomLevel - 1)) && self.zoomLevel > 0)
+    {
+        [super setTransform:CGAffineTransformIdentity];
+
+        ((UIScrollView *)self.superview).zoomScale = 2;
+
+        self.zoomLevel--;
+
+        [self.layer.sublayers makeObjectsPerformSelector:@selector(removeFromSuperlayer)];
+
+        float newEdge = MTL_TILE_SIZE * powf(2, self.zoomLevel);
+
+        self.bounds = CGRectMake(0, 0, newEdge, newEdge);
+        
+        [self.layer setNeedsDisplayInRect:[self visibleRect]];
+    }
+    else
+    {
+        [super setTransform:transform];
+
+//        NSLog(@"scale: %f", newZoomScale);
     }
 }
 

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DD5E316B169CC821002D30ED /* MTLTileLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = DD5E316A169CC821002D30ED /* MTLTileLayer.m */; };
 		DD937CC816975CC2007EFD8C /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD937CC716975CC2007EFD8C /* UIKit.framework */; };
 		DD937CCA16975CC2007EFD8C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD937CC916975CC2007EFD8C /* Foundation.framework */; };
 		DD937CCC16975CC2007EFD8C /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD937CCB16975CC2007EFD8C /* CoreGraphics.framework */; };
@@ -23,6 +24,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		DD5E3169169CC821002D30ED /* MTLTileLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MTLTileLayer.h; sourceTree = "<group>"; };
+		DD5E316A169CC821002D30ED /* MTLTileLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MTLTileLayer.m; sourceTree = "<group>"; };
 		DD937CC316975CC2007EFD8C /* MultiTiledLayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MultiTiledLayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD937CC716975CC2007EFD8C /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		DD937CC916975CC2007EFD8C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -96,6 +99,8 @@
 				DD937CE016975CC2007EFD8C /* MTLViewController.m */,
 				DD937CF71697602F007EFD8C /* MTLContentView.h */,
 				DD937CF81697602F007EFD8C /* MTLContentView.m */,
+				DD5E3169169CC821002D30ED /* MTLTileLayer.h */,
+				DD5E316A169CC821002D30ED /* MTLTileLayer.m */,
 				DDE601DD169799B1008EDDDD /* tile.png */,
 				DD937CCE16975CC2007EFD8C /* Supporting Files */,
 			);
@@ -187,6 +192,7 @@
 				DD937CD816975CC2007EFD8C /* MTLAppDelegate.m in Sources */,
 				DD937CE116975CC2007EFD8C /* MTLViewController.m in Sources */,
 				DD937CF91697602F007EFD8C /* MTLContentView.m in Sources */,
+				DD5E316B169CC821002D30ED /* MTLTileLayer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
