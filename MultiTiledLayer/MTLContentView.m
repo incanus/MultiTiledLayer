@@ -12,13 +12,53 @@
 
 #import <QuartzCore/QuartzCore.h>
 
-#define MTL_TILE_SIZE 256.0f
+#import "FMDatabaseQueue.h"
+#import "FMDatabase.h"
+
+#define MTL_TILE_SIZE 128.0f
 
 @interface MTLLayer : CALayer
+
+//@property (nonatomic, strong) NSMutableDictionary *memoryCache;
+@property (nonatomic, strong) FMDatabaseQueue *dbQueue;
 
 @end
 
 @implementation MTLLayer
+
+- (id)init
+{
+    self = [super init];
+
+//    self.memoryCache = [NSMutableDictionary dictionary];
+
+    NSString *path = [NSString stringWithFormat:@"%@/cache.db", NSTemporaryDirectory()];
+
+    if ( ! [[NSFileManager defaultManager] fileExistsAtPath:path])
+        [[NSFileManager defaultManager] copyItemAtPath:[[NSBundle mainBundle] pathForResource:@"cache" ofType:@"db"] toPath:path error:nil];
+
+    self.dbQueue = [FMDatabaseQueue databaseQueueWithPath:path];
+
+//    NSLog(@"%@", path);
+
+    return self;
+}
+
+//- (void)reload
+//{
+//    [self.dbQueue inDatabase:^(FMDatabase *db)
+//    {
+//        [db executeUpdate:@"delete from tiles"];
+//        [db executeUpdate:@"delete from fragments"];
+//        self.contents = nil;
+//        [self setNeedsDisplay];
+//    }];
+//}
+
+- (void)dealloc
+{
+    [self.dbQueue close];
+}
 
 - (void)display
 {
@@ -42,9 +82,14 @@
         {
             CGRect rect = CGRectMake(x, y, MTL_TILE_SIZE, MTL_TILE_SIZE);
 
-            for (CALayer *existingSublayer in self.sublayers)
+            for (MTLTileLayer *existingSublayer in self.sublayers)
+            {
                 if (CGRectEqualToRect(existingSublayer.frame, rect))
+                {
+                    existingSublayer.touchDate = [NSDate date];
                     continue;
+                }
+            }
 
 //            CALayer *hit = [self hitTest:CGPointMake(x, y)];
 //
@@ -56,6 +101,8 @@
 
 //                sublayer.anchorPoint = CGPointMake(0, 0);
                 sublayer.frame = CGRectMake(x, y, MTL_TILE_SIZE, MTL_TILE_SIZE);
+
+                sublayer.dbQueue = self.dbQueue;
 
 //                NSLog(@"=== adding %@", [NSValue valueWithCGRect:sublayer.frame]);
 
@@ -88,10 +135,11 @@
     return [MTLLayer class];
 }
 
-//- (void)didMoveToWindow
-//{
+- (void)didMoveToWindow
+{
 //    self.layer.contentsScale = 1;
-//}
+//    self.clearsContextBeforeDrawing = NO;
+}
 
 - (void)drawRect:(CGRect)rect
 {
@@ -145,11 +193,33 @@
 //    NSLog(@"bounds now %@", [NSValue valueWithCGRect:bounds]);
 }
 
+- (void)cleanupTiles
+{
+//    return;
+//    NSLog(@"=== entering cleanup with %i tiles", [self.layer.sublayers count]);
+
+//    [self.layer.sublayers makeObjectsPerformSelector:@selector(removeFromSuperlayer)];
+//
+//    return;
+
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^(void)
+    {
+        NSArray *layers = [self.layer.sublayers filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"SELF.touchDate < %@", [NSDate dateWithTimeIntervalSinceNow:-15]]];
+
+        dispatch_async(dispatch_get_main_queue(), ^(void)
+        {
+            [layers makeObjectsPerformSelector:@selector(removeFromSuperlayer)];
+
+//            NSLog(@"=== leaving cleanup with %i tiles", [self.layer.sublayers count]);
+        });
+    });
+}
+
 - (void)setTransform:(CGAffineTransform)transform
 {
     float newZoomScale = transform.a;
 
-    if (newZoomScale > 2 && self.bounds.size.width < (MTL_TILE_SIZE * powf(2, self.zoomLevel + 1)))
+    if (newZoomScale > 2 && self.bounds.size.width < (MTL_TILE_SIZE * powf(2, self.zoomLevel + 1)) && self.zoomLevel < 17)
     {
         [super setTransform:CGAffineTransformIdentity];
 
@@ -157,13 +227,16 @@
 
         self.zoomLevel++;
 
-        [self.layer.sublayers makeObjectsPerformSelector:@selector(removeFromSuperlayer)];
+//        [self.layer.sublayers makeObjectsPerformSelector:@selector(removeFromSuperlayer)];
+
+        [self cleanupTiles];
 
         float newEdge = MTL_TILE_SIZE * powf(2, self.zoomLevel);
 
         self.bounds = CGRectMake(0, 0, newEdge, newEdge);
 
-        [self.layer setNeedsDisplayInRect:[self visibleRect]];
+//        [self.layer setNeedsDisplayInRect:[self visibleRect]];
+//        [self.layer performSelector:@selector(setNeedsDisplay) withObject:nil afterDelay:0];
     }
     else if (newZoomScale < 1 && self.bounds.size.width > (MTL_TILE_SIZE * powf(2, self.zoomLevel - 1)) && self.zoomLevel > 0)
     {
@@ -173,13 +246,16 @@
 
         self.zoomLevel--;
 
-        [self.layer.sublayers makeObjectsPerformSelector:@selector(removeFromSuperlayer)];
+//        [self.layer.sublayers makeObjectsPerformSelector:@selector(removeFromSuperlayer)];
+
+        [self cleanupTiles];
 
         float newEdge = MTL_TILE_SIZE * powf(2, self.zoomLevel);
 
         self.bounds = CGRectMake(0, 0, newEdge, newEdge);
         
-        [self.layer setNeedsDisplayInRect:[self visibleRect]];
+//        [self.layer setNeedsDisplayInRect:[self visibleRect]];
+//        [self.layer performSelector:@selector(setNeedsDisplay) withObject:nil afterDelay:0];
     }
     else
     {

@@ -20,7 +20,16 @@
 		DD937CE116975CC2007EFD8C /* MTLViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = DD937CE016975CC2007EFD8C /* MTLViewController.m */; };
 		DD937CF91697602F007EFD8C /* MTLContentView.m in Sources */ = {isa = PBXBuildFile; fileRef = DD937CF81697602F007EFD8C /* MTLContentView.m */; };
 		DD937CFB1697609C007EFD8C /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD937CFA1697609C007EFD8C /* QuartzCore.framework */; };
-		DDE601DE169799B1008EDDDD /* tile.png in Resources */ = {isa = PBXBuildFile; fileRef = DDE601DD169799B1008EDDDD /* tile.png */; };
+		DDD5118C169F7A4000382802 /* FMDatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = DDD51183169F7A4000382802 /* FMDatabase.m */; };
+		DDD5118D169F7A4000382802 /* FMDatabaseAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = DDD51185169F7A4000382802 /* FMDatabaseAdditions.m */; };
+		DDD5118E169F7A4000382802 /* FMDatabasePool.m in Sources */ = {isa = PBXBuildFile; fileRef = DDD51187169F7A4000382802 /* FMDatabasePool.m */; };
+		DDD5118F169F7A4000382802 /* FMDatabaseQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = DDD51189169F7A4000382802 /* FMDatabaseQueue.m */; };
+		DDD51190169F7A4000382802 /* FMResultSet.m in Sources */ = {isa = PBXBuildFile; fileRef = DDD5118B169F7A4000382802 /* FMResultSet.m */; };
+		DDD51192169F7A4900382802 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DDD51191169F7A4900382802 /* libsqlite3.dylib */; };
+		DDD51194169F7B3E00382802 /* cache.db in Resources */ = {isa = PBXBuildFile; fileRef = DDD51193169F7B3E00382802 /* cache.db */; };
+		DDD51197169F9AB800382802 /* LoadingTile.png in Resources */ = {isa = PBXBuildFile; fileRef = DDD51195169F9AB800382802 /* LoadingTile.png */; };
+		DDD51198169F9AB800382802 /* LoadingTileZoom.png in Resources */ = {isa = PBXBuildFile; fileRef = DDD51196169F9AB800382802 /* LoadingTileZoom.png */; };
+		DDD5119B169FA8AB00382802 /* RMLoadingTileView.m in Sources */ = {isa = PBXBuildFile; fileRef = DDD5119A169FA8AB00382802 /* RMLoadingTileView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,7 +53,22 @@
 		DD937CF71697602F007EFD8C /* MTLContentView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MTLContentView.h; sourceTree = "<group>"; };
 		DD937CF81697602F007EFD8C /* MTLContentView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MTLContentView.m; sourceTree = "<group>"; };
 		DD937CFA1697609C007EFD8C /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		DDE601DD169799B1008EDDDD /* tile.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = tile.png; sourceTree = "<group>"; };
+		DDD51182169F7A4000382802 /* FMDatabase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FMDatabase.h; path = FMDB/src/FMDatabase.h; sourceTree = SOURCE_ROOT; };
+		DDD51183169F7A4000382802 /* FMDatabase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FMDatabase.m; path = FMDB/src/FMDatabase.m; sourceTree = SOURCE_ROOT; };
+		DDD51184169F7A4000382802 /* FMDatabaseAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FMDatabaseAdditions.h; path = FMDB/src/FMDatabaseAdditions.h; sourceTree = SOURCE_ROOT; };
+		DDD51185169F7A4000382802 /* FMDatabaseAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FMDatabaseAdditions.m; path = FMDB/src/FMDatabaseAdditions.m; sourceTree = SOURCE_ROOT; };
+		DDD51186169F7A4000382802 /* FMDatabasePool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FMDatabasePool.h; path = FMDB/src/FMDatabasePool.h; sourceTree = SOURCE_ROOT; };
+		DDD51187169F7A4000382802 /* FMDatabasePool.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FMDatabasePool.m; path = FMDB/src/FMDatabasePool.m; sourceTree = SOURCE_ROOT; };
+		DDD51188169F7A4000382802 /* FMDatabaseQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FMDatabaseQueue.h; path = FMDB/src/FMDatabaseQueue.h; sourceTree = SOURCE_ROOT; };
+		DDD51189169F7A4000382802 /* FMDatabaseQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FMDatabaseQueue.m; path = FMDB/src/FMDatabaseQueue.m; sourceTree = SOURCE_ROOT; };
+		DDD5118A169F7A4000382802 /* FMResultSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FMResultSet.h; path = FMDB/src/FMResultSet.h; sourceTree = SOURCE_ROOT; };
+		DDD5118B169F7A4000382802 /* FMResultSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FMResultSet.m; path = FMDB/src/FMResultSet.m; sourceTree = SOURCE_ROOT; };
+		DDD51191169F7A4900382802 /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
+		DDD51193169F7B3E00382802 /* cache.db */ = {isa = PBXFileReference; lastKnownFileType = file; path = cache.db; sourceTree = SOURCE_ROOT; };
+		DDD51195169F9AB800382802 /* LoadingTile.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = LoadingTile.png; sourceTree = "<group>"; };
+		DDD51196169F9AB800382802 /* LoadingTileZoom.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = LoadingTileZoom.png; sourceTree = "<group>"; };
+		DDD51199169FA8AB00382802 /* RMLoadingTileView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RMLoadingTileView.h; sourceTree = "<group>"; };
+		DDD5119A169FA8AB00382802 /* RMLoadingTileView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RMLoadingTileView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +80,7 @@
 				DD937CCA16975CC2007EFD8C /* Foundation.framework in Frameworks */,
 				DD937CC816975CC2007EFD8C /* UIKit.framework in Frameworks */,
 				DD937CFB1697609C007EFD8C /* QuartzCore.framework in Frameworks */,
+				DDD51192169F7A4900382802 /* libsqlite3.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -66,6 +91,7 @@
 			isa = PBXGroup;
 			children = (
 				DD937CCD16975CC2007EFD8C /* MultiTiledLayer */,
+				DDD51180169F7A0900382802 /* FMDB */,
 				DD937CC616975CC2007EFD8C /* Frameworks */,
 				DD937CC416975CC2007EFD8C /* Products */,
 			);
@@ -86,6 +112,7 @@
 				DD937CC916975CC2007EFD8C /* Foundation.framework */,
 				DD937CC716975CC2007EFD8C /* UIKit.framework */,
 				DD937CFA1697609C007EFD8C /* QuartzCore.framework */,
+				DDD51191169F7A4900382802 /* libsqlite3.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -97,11 +124,15 @@
 				DD937CD716975CC2007EFD8C /* MTLAppDelegate.m */,
 				DD937CDF16975CC2007EFD8C /* MTLViewController.h */,
 				DD937CE016975CC2007EFD8C /* MTLViewController.m */,
+				DDD51199169FA8AB00382802 /* RMLoadingTileView.h */,
+				DDD5119A169FA8AB00382802 /* RMLoadingTileView.m */,
 				DD937CF71697602F007EFD8C /* MTLContentView.h */,
 				DD937CF81697602F007EFD8C /* MTLContentView.m */,
 				DD5E3169169CC821002D30ED /* MTLTileLayer.h */,
 				DD5E316A169CC821002D30ED /* MTLTileLayer.m */,
-				DDE601DD169799B1008EDDDD /* tile.png */,
+				DDD51195169F9AB800382802 /* LoadingTile.png */,
+				DDD51196169F9AB800382802 /* LoadingTileZoom.png */,
+				DDD51193169F7B3E00382802 /* cache.db */,
 				DD937CCE16975CC2007EFD8C /* Supporting Files */,
 			);
 			path = MultiTiledLayer;
@@ -119,6 +150,24 @@
 				DD937CDD16975CC2007EFD8C /* Default-568h@2x.png */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		DDD51180169F7A0900382802 /* FMDB */ = {
+			isa = PBXGroup;
+			children = (
+				DDD51182169F7A4000382802 /* FMDatabase.h */,
+				DDD51183169F7A4000382802 /* FMDatabase.m */,
+				DDD51184169F7A4000382802 /* FMDatabaseAdditions.h */,
+				DDD51185169F7A4000382802 /* FMDatabaseAdditions.m */,
+				DDD51186169F7A4000382802 /* FMDatabasePool.h */,
+				DDD51187169F7A4000382802 /* FMDatabasePool.m */,
+				DDD51188169F7A4000382802 /* FMDatabaseQueue.h */,
+				DDD51189169F7A4000382802 /* FMDatabaseQueue.m */,
+				DDD5118A169F7A4000382802 /* FMResultSet.h */,
+				DDD5118B169F7A4000382802 /* FMResultSet.m */,
+			);
+			name = FMDB;
+			path = MultiTiledLayer;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -177,7 +226,9 @@
 				DD937CDA16975CC2007EFD8C /* Default.png in Resources */,
 				DD937CDC16975CC2007EFD8C /* Default@2x.png in Resources */,
 				DD937CDE16975CC2007EFD8C /* Default-568h@2x.png in Resources */,
-				DDE601DE169799B1008EDDDD /* tile.png in Resources */,
+				DDD51194169F7B3E00382802 /* cache.db in Resources */,
+				DDD51197169F9AB800382802 /* LoadingTile.png in Resources */,
+				DDD51198169F9AB800382802 /* LoadingTileZoom.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -193,6 +244,12 @@
 				DD937CE116975CC2007EFD8C /* MTLViewController.m in Sources */,
 				DD937CF91697602F007EFD8C /* MTLContentView.m in Sources */,
 				DD5E316B169CC821002D30ED /* MTLTileLayer.m in Sources */,
+				DDD5118C169F7A4000382802 /* FMDatabase.m in Sources */,
+				DDD5118D169F7A4000382802 /* FMDatabaseAdditions.m in Sources */,
+				DDD5118E169F7A4000382802 /* FMDatabasePool.m in Sources */,
+				DDD5118F169F7A4000382802 /* FMDatabaseQueue.m in Sources */,
+				DDD51190169F7A4000382802 /* FMResultSet.m in Sources */,
+				DDD5119B169FA8AB00382802 /* RMLoadingTileView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

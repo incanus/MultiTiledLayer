@@ -8,6 +8,19 @@
 
 #import "MTLTileLayer.h"
 
+#import "FMDatabaseQueue.h"
+#import "FMDatabase.h"
+
+//@interface MTLLayer : CALayer
+//
+//@property (nonatomic, strong) NSMutableDictionary *memoryCache;
+//
+//@end
+
+typedef struct {
+	int x, y, z;
+} MTLKey;
+
 @implementation MTLTileLayer
 
 - (id)init
@@ -24,11 +37,15 @@
 //    [customActions setObject:[NSNull null] forKey:kCAOnOrderIn];
 //
 //    CATransition *fadein = [[CATransition alloc] init];
-//    fadein.duration = 0.3;
-//    fadein.type = kCATransitionReveal;
+//    fadein.duration = 0.5;
+//    fadein.type = kCATransitionFade;
 //    [customActions setObject:fadein forKey:@"contents"];
 //
 //    self.actions=customActions;
+
+    [self enableFade:NO];
+
+//    NSLog(@"%@", self.actions);
 
 //    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void)
 //    {
@@ -38,6 +55,7 @@
 //        {
 ////            self.contents = (id)[[UIImage imageNamed:@"tile.png"] CGImage];
             [self setNeedsDisplay];
+//    [self performSelector:@selector(setNeedsDisplay) withObject:nil afterDelay:0.1];
 
 //        });
 //    });
@@ -59,8 +77,91 @@
     return [NSString stringWithFormat:@"tile at %f, %f", self.frame.origin.x, self.frame.origin.y];
 }
 
+- (void)enableFade:(BOOL)flag
+{
+    NSMutableDictionary *customActions=[NSMutableDictionary dictionaryWithDictionary:[self actions]];
+
+    [customActions setObject:[NSNull null] forKey:@"position"];
+    [customActions setObject:[NSNull null] forKey:@"bounds"];
+    [customActions setObject:[NSNull null] forKey:kCAOnOrderOut];
+    [customActions setObject:[NSNull null] forKey:kCAOnOrderIn];
+
+    if (flag)
+    {
+        CATransition *fadein = [[CATransition alloc] init];
+        fadein.duration = 0.5;
+        fadein.type = kCATransitionFade;
+        [customActions setObject:fadein forKey:@"contents"];
+    }
+    else
+    {
+        [customActions setObject:[NSNull null] forKey:@"contents"];
+    }
+
+    self.actions=customActions;
+}
+
+- (void)setTouchDate:(NSDate *)touchDate
+{
+//    NSLog(@"touching %@", self);
+
+    _touchDate = touchDate;
+}
+
+- (NSData *)tileDataForKey:(MTLKey)key
+{
+    __block NSData *data = nil;
+
+    [self.dbQueue inDatabase:^(FMDatabase *db)
+    {
+        FMResultSet *results = [db executeQueryWithFormat:@"select data from tiles where x = %i and y = %i and z = %i", key.x, key.y, key.z];
+
+        if ([results next])
+            data = [results objectForColumnName:@"data"];
+
+        [results close];
+    }];
+    
+    return data;
+}
+
+- (NSData *)fragmentDataForKey:(MTLKey)key
+{
+    __block NSData *data = nil;
+
+    [self.dbQueue inDatabase:^(FMDatabase *db)
+    {
+        FMResultSet *results = [db executeQueryWithFormat:@"select data from fragments where x = %i and y = %i and z = %i", key.x, key.y, key.z];
+
+        if ([results next])
+            data = [results objectForColumnName:@"data"];
+
+        [results close];
+    }];
+
+    return data;
+}
+
+- (void)storeTileData:(NSData *)data forKey:(MTLKey)key
+{
+    [self.dbQueue inDatabase:^(FMDatabase *db)
+    {
+        [db executeUpdateWithFormat:@"replace into tiles (x, y, z, data) values (%i, %i, %i, %@)", key.x, key.y, key.z, data];
+    }];
+}
+
+- (void)storeFragmentData:(NSData *)data forKey:(MTLKey)key
+{
+    [self.dbQueue inDatabase:^(FMDatabase *db)
+    {
+        [db executeUpdate:@"insert into fragments (x, y, z, data) values (%i, %i, %i, %@)", key.x, key.y, key.z, data];
+    }];
+}
+
 - (void)display
 {
+//    NSLog(@"%@", self.dbQueue);
+
 //    NSLog(@"display for %@", [NSValue valueWithCGRect:self.frame]);
 
     int tileZ = (int)[[self.superlayer.delegate valueForKey:@"zoomLevel"] floatValue];
@@ -71,29 +172,73 @@
 
     __block UIImage *tileImage = nil;
 
-    NSString *cachePath = [NSString stringWithFormat:@"%@/%i_%i_%i.png", NSTemporaryDirectory(), tileZ, tileX, tileY];
+    __block BOOL isFinal = NO;
 
-    if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath])
+//    NSString *tileKey = [NSString stringWithFormat:@"%i_%i_%i", tileZ, tileX, tileY];
+
+    MTLKey tileKey = {
+        .x = tileX,
+        .y = tileY,
+        .z = tileZ,
+    };
+
+//    NSString *cachePath = [NSString stringWithFormat:@"%@/%@.png", NSTemporaryDirectory(), tileKey];
+//    NSString *tmpPath   = [cachePath stringByReplacingOccurrencesOfString:@".png" withString:@"_tmp.png"];
+
+//    NSMutableDictionary *memoryCache = ((MTLLayer *)self.superlayer).memoryCache;
+
+    if ( /*(tileImage = [UIImage imageWithData:[memoryCache objectForKey:tileKey]]))*/ (tileImage = [UIImage imageWithData:[self tileDataForKey:tileKey]])) // [UIImage imageWithContentsOfFile:cachePath])) // [[NSFileManager defaultManager] fileExistsAtPath:cachePath])
     {
-        tileImage = [UIImage imageWithContentsOfFile:cachePath];
+//        tileImage = [UIImage imageWithContentsOfFile:cachePath];
+        [self enableFade:YES];
+        isFinal = YES;
+    }
+    else if ( /*(tileImage = [UIImage imageWithData:[memoryCache objectForKey:[tileKey stringByAppendingString:@"_tmp"]]]))*/ (tileImage = [UIImage imageWithData:[self fragmentDataForKey:tileKey]])) // (tileImage = [UIImage imageWithContentsOfFile:tmpPath])) // [[NSFileManager defaultManager] fileExistsAtPath:tmpPath])
+    {
+//        tileImage = [UIImage imageWithContentsOfFile:tmpPath];
+        [self enableFade:NO];
     }
     else
     {
-        NSString *tileURLString = [NSString stringWithFormat:@"http://a.tiles.mapbox.com/v3/examples.map-z2effxa8/%i/%i/%i.png", tileZ, tileX, tileY];
+        NSString *tileURLString = [NSString stringWithFormat:@"http://a.tiles.mapbox.com/v3/examples.map-2k9d7u0c/%i/%i/%i.png", tileZ, tileX, tileY];
 
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^(void)
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void)
         {
             NSData *tileData = [NSData dataWithContentsOfURL:[NSURL URLWithString:tileURLString]];
 
-            [tileData writeToFile:cachePath atomically:NO];
+//            [tileData writeToFile:cachePath atomically:YES];
+
+            [self storeTileData:tileData forKey:tileKey];
+
+//            dispatch_sync(dispatch_get_main_queue(), ^(void)
+//            {
+//                [memoryCache setObject:tileData forKey:tileKey];
+//            });
+
+//            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^(void)
+//            {
+//                [[NSFileManager defaultManager] removeItemAtPath:tmpPath error:nil];
+//            });
 
             dispatch_sync(dispatch_get_main_queue(), ^(void)
             {
-                self.contents = (id)[[UIImage imageWithData:tileData] CGImage];
+                [self enableFade:YES];
+//
+                if (self.superlayer)
+                    self.contents = (id)[[UIImage imageWithData:tileData] CGImage];
+
+                isFinal = YES;
+
+//                [NSObject cancelPreviousPerformRequestsWithTarget:self];
+
+//                if (self.superlayer)
+//                    [self.superlayer setNeedsDisplayInRect:self.frame];
+
+//                NSLog(@"%@", ((MTLLayer *)self.superlayer).memoryCache);
             });
         });
 
-        dispatch_sync(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^(void)
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^(void)
         {
             int zoom = tileZ;
             int x    = tileX;
@@ -108,10 +253,13 @@
                 float nextTileX = floor(nextX),
                 nextTileY = floor(nextY);
 
-                NSString *cachePath = [NSString stringWithFormat:@"%@/%i_%i_%i.png", NSTemporaryDirectory(), zoom, x, y];
+//                NSString *cachePath = [NSString stringWithFormat:@"%@/%i_%i_%i.png", NSTemporaryDirectory(), currentZoom, (int)nextTileX, (int)nextTileY];
 
-                if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath])
-                    tileImage = [UIImage imageWithContentsOfFile:cachePath];
+//                NSLog(@"need %i, %i, %i - looking at %i, %f, %f", zoom, x, y, currentZoom, nextTileX, nextTileY);
+
+//                if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath])
+//                    tileImage = [UIImage imageWithContentsOfFile:cachePath];
+                tileImage = [UIImage imageWithData:[self tileDataForKey:tileKey]];
 
                 if (tileImage)
                 {
@@ -126,6 +274,18 @@
                     tileImage = [UIImage imageWithCGImage:imageRef];
                     CGImageRelease(imageRef);
 
+                    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^(void)
+                    {
+                        NSData *tileData = UIImagePNGRepresentation(tileImage);
+//                        [tileData writeToFile:tmpPath atomically:YES];
+                        [self storeFragmentData:tileData forKey:tileKey];
+
+//                        dispatch_sync(dispatch_get_main_queue(), ^(void)
+//                        {
+//                            [memoryCache setObject:tileData forKey:[tileKey stringByAppendingString:@"_tmp"]];
+//                        });
+                    });
+
                     break;
                 }
                 else
@@ -136,13 +296,28 @@
                 currentTileDepth++;
                 currentZoom = zoom - currentTileDepth;
             }
-        });
 
-//        tileImage = [UIImage imageNamed:@"tile.png"];
+            if (tileImage && ! isFinal)
+            {
+                dispatch_sync(dispatch_get_main_queue(), ^(void)
+                {
+                    [self enableFade:NO];
+
+                    if (self.superlayer)
+                        self.contents = (id)[tileImage CGImage];
+
+//                    [self performSelector:@selector(setNeedsDisplay) withObject:nil afterDelay:1.0];
+
+//                    if (self.superlayer)
+//                        [self.superlayer setNeedsDisplayInRect:self.frame];
+                });
+            }
+        });
     }
 
     if ( ! tileImage)
         return;
+//        tileImage = [UIImage imageNamed:@"grid.png"];
 
     self.contents = (id)[tileImage CGImage];
 

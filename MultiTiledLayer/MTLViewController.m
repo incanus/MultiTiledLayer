@@ -10,17 +10,26 @@
 
 #import "MTLContentView.h"
 
+#import "RMLoadingTileView.h"
+
 #import <QuartzCore/QuartzCore.h>
 
-#define MTL_TILE_SIZE 256.0f
+#define MTL_TILE_SIZE 128.0f
 
 @implementation MTLViewController
+{
+    int _lastZoomLevel;
+    MTLContentView *_contentView;
+//    UIView *_backgroundView;
+    RMLoadingTileView *_loadingTileView;
+    CGPoint _lastContentOffset;
+}
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
 
-    self.view.backgroundColor = [UIColor grayColor];
+    self.view.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"LoadingTileZoom.png"]];
 
     float boundsWidth = MTL_TILE_SIZE; //powf(2, 12);
     int zoomLevels    = 10;
@@ -33,9 +42,19 @@
     scrollView.maximumZoomScale = powf(2, zoomLevels);
     scrollView.decelerationRate = UIScrollViewDecelerationRateFast;
 
-    [scrollView addSubview:[[MTLContentView alloc] initWithFrame:CGRectMake(0, 0, boundsWidth, boundsWidth)]];
+    _contentView = [[MTLContentView alloc] initWithFrame:CGRectMake(0, 0, boundsWidth, boundsWidth)];
+    [scrollView addSubview:_contentView];
     [self.view addSubview:scrollView];
-    scrollView.contentSize = ((UIView *)[scrollView.subviews objectAtIndex:0]).bounds.size;
+    scrollView.contentSize = _contentView.bounds.size;
+
+//    _backgroundView = [[UIView alloc] initWithFrame:_contentView.bounds];
+//    _backgroundView.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"LoadingTile.png"]];
+//    [scrollView insertSubview:_backgroundView belowSubview:_contentView];
+
+    _loadingTileView = [[RMLoadingTileView alloc] initWithFrame:scrollView.frame];
+    [self.view insertSubview:_loadingTileView belowSubview:scrollView];
+
+    [scrollView addObserver:self forKeyPath:@"contentOffset" options:(NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld) context:NULL];
 
     UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(zoomIn:)];
     doubleTap.numberOfTapsRequired = 2;
@@ -49,21 +68,27 @@
     UITapGestureRecognizer *debugTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(debugTap:)];
     [scrollView addGestureRecognizer:debugTap];
 
-    UIButton *button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    [button setTitle:@"Reload" forState:UIControlStateNormal];
-    [button addTarget:self action:@selector(reload:) forControlEvents:UIControlEventTouchUpInside];
-    [button setFrame:CGRectMake(20, self.view.bounds.size.height - 20 - 40, 100, 40)];
-    [button setAutoresizingMask:UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin];
-    [self.view addSubview:button];
+//    UIButton *button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+//    [button setTitle:@"Reload" forState:UIControlStateNormal];
+//    [button addTarget:self action:@selector(reload:) forControlEvents:UIControlEventTouchUpInside];
+//    [button setFrame:CGRectMake(20, self.view.bounds.size.height - 20 - 40, 100, 40)];
+//    [button setAutoresizingMask:UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin];
+//    [self.view addSubview:button];
+
+    _lastZoomLevel = _contentView.zoomLevel;
 }
 
-- (void)reload:(id)sender
-{
-//    for (MTLContentView *subview in [[self.view.subviews objectAtIndex:0] subviews])
+//- (void)reload:(id)sender
+//{
+//    for (MTLContentView *subview in [_contentView subviews])
 //    {
-//        subview.layer.contents = nil;
-//        [subview.layer setNeedsDisplay];
+//        [subview.layer performSelector:@selector(reload) withObject:nil];
 //    }
+//}
+
+- (void)observeValueForKeyPath:(NSString *)aKeyPath ofObject:(id)anObject change:(NSDictionary *)change context:(void *)context
+{
+    _lastContentOffset = [[anObject valueForKey:@"contentOffset"] CGPointValue];
 }
 
 - (void)zoomIn:(UIGestureRecognizer *)recognizer
@@ -82,7 +107,7 @@
 
 - (void)debugTap:(UIGestureRecognizer *)recognizer
 {
-    CALayer *hit = [recognizer.view.layer hitTest:[recognizer locationInView:[recognizer.view.subviews objectAtIndex:0]]];
+    CALayer *hit = [recognizer.view.layer hitTest:[recognizer locationInView:_contentView]];
 
     if (hit)
     {
@@ -95,40 +120,70 @@
 
 - (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView
 {
-    return [scrollView.subviews objectAtIndex:0];
+    return _contentView;
 }
 
 - (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(float)scale
 {
-    [[scrollView.subviews objectAtIndex:0] performSelector:@selector(setNeedsDisplay/*InRect:*/) withObject:nil/*[NSValue valueWithCGRect:visibleRect]*/ afterDelay:0.1];
+    _loadingTileView.mapZooming = NO;
+
+//    _backgroundView.frame = CGRectMake(scrollView.contentOffset.x - scrollView.bounds.size.width, scrollView.contentOffset.y - scrollView.bounds.size.height, scrollView.bounds.size.width * 3, scrollView.bounds.size.height * 3);
+//    _backgroundView.frame = CGRectMake(scrollView.contentOffset.x * scrollView.zoomScale - scrollView.bounds.size.width,
+//                                       scrollView.contentOffset.y * scrollView.zoomScale - scrollView.bounds.size.height,
+//                                       _contentView.bounds.size.width  * 3 * scrollView.zoomScale,
+//                                       _contentView.bounds.size.height * 3 * scrollView.zoomScale);
+//    _backgroundView.hidden = NO;
+//    _contentView.hidden = YES;
+
+    //    [_contentView performSelector:@selector(setNeedsDisplay/*InRect:*/) withObject:nil/*[NSValue valueWithCGRect:visibleRect]*/ afterDelay:0.1];
 }
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
 {
-//    [NSObject cancelPreviousPerformRequestsWithTarget:[scrollView.subviews objectAtIndex:0]];
+//    _backgroundView.center = scrollView.center;
+//    _backgroundView.hidden = NO;
+    //    [NSObject cancelPreviousPerformRequestsWithTarget:_contentView];
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
+{
+//    _backgroundView.center = scrollView.center;
+//    _backgroundView.hidden = NO;
 }
 
 - (void)scrollViewWillBeginZooming:(UIScrollView *)scrollView withView:(UIView *)view
 {
-//    [NSObject cancelPreviousPerformRequestsWithTarget:[scrollView.subviews objectAtIndex:0]];
+    _loadingTileView.mapZooming = YES;
+
+//    _backgroundView.hidden = YES;
+
+//    [NSObject cancelPreviousPerformRequestsWithTarget:_contentView];
 }
 
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
-//    [[scrollView.subviews objectAtIndex:0] performSelector:@selector(setNeedsDisplay/*InRect:*/) withObject:nil/*[NSValue valueWithCGRect:visibleRect]*/ afterDelay:0.1];
+//    [_contentView performSelector:@selector(setNeedsDisplay/*InRect:*/) withObject:nil/*[NSValue valueWithCGRect:visibleRect]*/ afterDelay:0.1];
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
+    CGSize delta = CGSizeMake(scrollView.contentOffset.x - _lastContentOffset.x, scrollView.contentOffset.y - _lastContentOffset.y);
+    CGPoint newOffset = CGPointMake(_loadingTileView.contentOffset.x + delta.width, _loadingTileView.contentOffset.y + delta.height);
+    _loadingTileView.contentOffset = newOffset;
+
+//    _lastContentOffset = scrollView.contentOffset;
+
+//    _backgroundView.hidden = NO;
+
 //    NSLog(@"%@", [NSValue valueWithCGPoint:scrollView.contentOffset]);
 
-    UIView *contentView = [scrollView.subviews objectAtIndex:0];
+    UIView *contentView = _contentView;
 
 //    contentView.clearsContextBeforeDrawing = NO;
 
 //    contentView.layer.drawsAsynchronously = YES;
 
-    [NSObject cancelPreviousPerformRequestsWithTarget:contentView];
+//    [NSObject cancelPreviousPerformRequestsWithTarget:contentView];
 
 //    CGRect visibleRect;
 //
@@ -138,13 +193,26 @@
 //                             scrollView.bounds.size.height);
 
     [contentView performSelector:@selector(setNeedsDisplay/*InRect:*/) withObject:nil/*[NSValue valueWithCGRect:visibleRect]*/ afterDelay:0.1];
+
+//    _backgroundView.frame = CGRectMake(scrollView.contentOffset.x - scrollView.bounds.size.width, scrollView.contentOffset.y - scrollView.bounds.size.height, scrollView.bounds.size.width * 3, scrollView.bounds.size.height * 3);
+//    _backgroundView.frame = CGRectMake(scrollView.contentOffset.x * scrollView.zoomScale - scrollView.bounds.size.width,
+//                                       scrollView.contentOffset.y * scrollView.zoomScale - scrollView.bounds.size.height,
+//                                       _contentView.bounds.size.width  * 3 * scrollView.zoomScale,
+//                                       _contentView.bounds.size.height * 3 * scrollView.zoomScale);
+//    _backgroundView.hidden = NO;
+
+//    NSLog(@"%@", _backgroundView);
+
+//    [contentView setNeedsDisplay];
 }
 
 - (void)scrollViewDidZoom:(UIScrollView *)scrollView
 {
-    UIView *contentView = [scrollView.subviews objectAtIndex:0];
+//    _backgroundView.hidden = YES;
 
-    [NSObject cancelPreviousPerformRequestsWithTarget:contentView];
+    UIView *contentView = _contentView;
+
+//    [NSObject cancelPreviousPerformRequestsWithTarget:contentView];
 
 //    CGRect visibleRect;
 //
@@ -153,7 +221,14 @@
 //                             (floor(scrollView.bounds.size.width  / MTL_TILE_SIZE) + 1) * MTL_TILE_SIZE,
 //                             (floor(scrollView.bounds.size.height / MTL_TILE_SIZE) + 1) * MTL_TILE_SIZE);
 
-//    [contentView performSelector:@selector(setNeedsDisplay/*InRect:*/) withObject:nil/*[NSValue valueWithCGRect:visibleRect]*/ afterDelay:0.1];
+//    [contentView performSelector:@selector(setNeedsDisplay/*InRect:*/) withObject:nil/*[NSValue valueWithCGRect:visibleRect]*/ afterDelay:0];
+
+//    if (((MTLContentView *)contentView).zoomLevel != _lastZoomLevel)
+//    {
+//        _lastZoomLevel = ((MTLContentView *)contentView).zoomLevel;
+//
+//        [contentView setNeedsDisplay];
+//    }
 }
 
 @end

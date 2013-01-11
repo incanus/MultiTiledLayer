@@ -8,6 +8,11 @@
 
 #import <QuartzCore/QuartzCore.h>
 
+@class FMDatabaseQueue;
+
 @interface MTLTileLayer : CALayer
+
+@property (nonatomic, strong) NSDate *touchDate;
+@property (nonatomic, assign) FMDatabaseQueue *dbQueue;
 
 @end
